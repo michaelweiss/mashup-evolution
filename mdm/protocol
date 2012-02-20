@@ -1,0 +1,90 @@
+Protocol 2012-02-17
+Document existing mashup evolution project
+
+1. The mdm scripts run a variety of experiments. Each takes mashup-api data as input.
+
+> mdm <data/mashup/mashup-apis-2010-08-16.csv >mashup-apis-2010-08-16.dat
+
+1.1 The mashup-api data contains one entry per mashup, eg:
+
+2005-09-15T12:52:35Z,GoogleMaps,Eventful
+
+Column one is a unique name for the mashup composed from the date when the mashup was posted and the time.
+Column two and higher are the APIs combined into the mashup.
+
+1.2 Running the script with the following two functions enabled shows the mashups read:
+
+readMashupEventsFromSpreadsheet();
+experimentShowMashups();
+
+Here is the result of running the script (mdm-1):
+
+1, c( 'Flickr' )
+2, c( 'OpenLayers', 'NASA', 'GoogleMaps', 'MicrosoftVirtualEarth', 'YahooMaps' )
+3, c( '30Boxes' )
+4, c( 'Flickr' )
+5, c( 'Flickr' )
+...
+
+The c() construct is a list in a format that can be read by R.
+
+1.3 Generate a list of the mashup variants. Two mashups belong to the same variant, if their APIs are the same.
+
+Executing experimentVariants() generates names from the mashup APIs. 
+APIs appear in sorted order, so mashups with the same blueprint will be assigned the same name.
+
+c( 'Flickr' )
+        Flickr
+c( 'OpenLayers', 'NASA', 'GoogleMaps', 'MicrosoftVirtualEarth', 'YahooMaps' )
+        GoogleMaps/MicrosoftVirtualEarth/NASA/OpenLayers/YahooMaps
+c( '30Boxes' )
+        30Boxes
+c( 'GoogleMaps', 'Eventful' )
+        Eventful/GoogleMaps
+...
+
+Running the mdm-2 script invokes:
+
+readMashupEventsFromSpreadsheet();
+experimentVariants();
+experimentShowVariants("variants");
+
+The result is an data file for R with two columns: variant and number of occurrences.
+
+variant, n
+GoogleMaps, 1197
+Flickr, 139
+AmazoneCommerce, 110
+YouTube, 107
+Twitter, 96
+...
+GoogleMaps/Twitter, 38
+GoogleMaps/YouTube, 36
+Flickr/GoogleMaps, 36
+...
+
+The results are sorted by variant frequency. Mashups that just use GoogleMaps are the most common variant.
+Mashups that combine multiple APIs are significantly less frequent.
+
+1.4 Get lifespan of each variant. Generate variants as above, but calling experimentShowVariants with the argument "all".
+
+readMashupEventsFromSpreadsheet();
+experimentVariants();
+experimentShowVariants("all");
+
+The result is a data file with two additional columns: first and last timestep that variant was observed.
+
+GoogleMaps, 1197, 13, 4967
+Flickr, 139, 1, 4896
+AmazoneCommerce, 110, 14, 4930
+YouTube, 107, 678, 4968
+Twitter, 96, 1620, 4965
+...
+GoogleMaps/Twitter, 38, 1617, 4972
+GoogleMaps/YouTube, 36, 733, 4847
+Flickr/GoogleMaps, 36, 281, 4691
+
+
+
+
+

@@ -1,0 +1,8 @@
+#!/bin/sh
+
+n=1000
+for ((i=1; i<=n; i++))
+do
+  echo "run $i"
+  mashup.pl $1 $2 > "data/t7112_$1_$2_$i.R"
+done
