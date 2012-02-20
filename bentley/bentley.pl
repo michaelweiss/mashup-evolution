@@ -3,11 +3,11 @@
 my $DEBUG = 0;				# show debug messages
 
 my $N = 1;					# initial number of agents
-my $n = 1;					# number of agents joining each step
-my $mu = 0.5;				# innovation parameter
+my $n = 10;					# number of agents joining each step
+my $mu = 0.6;				# innovation parameter
 my $m = -1;					# number of previous steps (-1 is all)
 my $t = 0;					# time step
-my $T = 5;					# maximum time step
+my $T = 20000;				# length of simulation in time steps
 	
 my @location;				# locations of agents
 my $l = $N;					# next available new location
@@ -45,8 +45,8 @@ sub grow {
 }
 
 sub selectLocation {
-	my ($t, $i) = @_;
-	my $r = int(rand()*($t*$n));
+	my ($t) = @_;
+	my $r = int(rand()*($N+($t-1)*$n));
 	print "r = $r\n" if ($DEBUG);
 	my $k = findLocationInterval($r);
 	return $k;
@@ -61,7 +61,7 @@ sub findLocationInterval {
 			return $j;
 		}
 	}
-	die "did not find a location";
+	die "did not find a location: r = $r";
 }
 
 sub show {
