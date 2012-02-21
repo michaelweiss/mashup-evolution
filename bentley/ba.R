@@ -1,4 +1,4 @@
-ba <- read.table("bentley_1_10_6000_20000.csv", header=FALSE)
+ba <- read.table("bentley_1_6000_X_10_20000.csv", header=FALSE)
 names(ba) <- c("location", "size")
 
 ba.freq <- table(ba$size)

@@ -41,6 +41,18 @@ sub findLocationInterval {
 	die "did not find a location";
 }
 
+sub testRandomNumberRange {
+	my @memory = (0..9);
+	my $max = -1;
+	foreach (1..1000) {
+		my $r = int(rand()*($#memory+1));
+		$max = $r if ($r > $max);
+	}
+	$max == 9 || die "expected max $r to be 9";
+	# expect $r to be in range 0..9
+}
+
 testFindLocationOneInterval();
 testFindLocationTwoIntervals();
 testFindLocationIntervalBoundary();
+testRandomNumberRange();

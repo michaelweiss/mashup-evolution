@@ -1,13 +1,13 @@
 #!/usr/bin/perl
 
-my $DEBUG = 1;				# show debug messages
+my $DEBUG = 0;				# show debug messages
 
-my $N = 1;					# initial number of agents
-my $n = 3;					# number of agents joining each step
-my $mu = 0.6;				# innovation parameter
-my $m = 1;					# number of previous steps (-1 is all)
+my $N = 1000;				# initial number of agents
+my $n = 450;				# number of agents joining each step
+my $mu = 0.004;				# innovation parameter
+my $m = 4;					# number of previous steps (-1 is all)
 my $t = 0;					# time step
-my $T = 5;					 # length of simulation in time steps
+my $T = 8000;				# length of simulation in time steps
 	
 my @location;				# locations of agents
 my $l = $N;					# next available new location
@@ -18,9 +18,14 @@ my $seed = time() + $$;		# time + process id
 
 sub init {
 	srand($seed);
+	# need to better understand circumstances when $N > $m*$n
+	# in the current simulation such choices can never be copied
 	foreach $j (0..$N-1) {
 		addLocation($j);
 		$location[$j] = 1;
+	}
+	foreach ($m*$n..$N-1) {
+		shift @memory;
 	}
 }
 
@@ -51,27 +56,38 @@ sub grow {
 
 sub selectLocation {
 	my ($t) = @_;
-	# initial implementation of memory
-	# select a choice at random
-	# this implementation makes an incorrect simplificiation:
-	# should only select location from the $m previous time steps
 	print "memory at t = $t\n" if ($DEBUG);
 	showMemory() if ($DEBUG);
-	my $r = int(rand()*$#memory);
+	# pick a random number in the range 0..size(memory)
+	# don't include locations chosen in the current time step
+	my $r = int(rand()*min($#memory+1, $m*$n));
 	return $memory[$r];
+}
+
+sub min {
+	my ($x, $y) = @_;
+	return $x if ($x < $y);
+	return $y;
 }
 
 sub addLocation {
 	my ($location) = @_;
-	# initial implementation of memory
-	# add new location to the end of the memory
-	# remove oldest location from the front
-	# this implementation makes an incorrect simplificiation:
-	# locations should only be copied from the $m previous time steps
-	# so should only remove old locations at end of time step
+	# implementation may be overly complex: should work, but it would
+	# be easier to understand if we kept two lists
 	push(@memory, $location);
-	if ($#memory == $m*$n) {	# $m*$n is one more than allowed
-		shift @memory;
+	# memory contains two groups of locations:
+	#   0..$m*$n-1 for choices at previous time steps
+	#   $m*$n..$m*$n+$n-1 for choices at the current time step
+	# when memory reaches $m*$n+$n-1 locations, all choices have been
+	# made at the current time step, therefore:
+	if ($#memory == $m*$n+$n-1) {		
+		# shifting $n times at end of time step is like a watermark in a
+		# buffering algorithm: all choices from the oldest time step
+		# are removed in a single step and replaced by the choices from
+		# the most recent time step
+		foreach (0..$n-1) {
+			shift @memory;
+		}
 	}
 }
 
@@ -82,9 +98,14 @@ sub show {
 }
 
 sub showMemory {
+	# previous time steps
 	foreach $j (0..$m*$n-1) {
 		print "$j, $memory[$j]\n";
 	}
+	# current time step
+	foreach $j ($m*$n..$m*$n+$n-1) {
+		print "*$j, $memory[$j]\n";
+	}	
 }
 
 init();
