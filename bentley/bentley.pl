@@ -111,5 +111,3 @@ sub showMemory {
 init();
 grow();
 show();
-
-1;
