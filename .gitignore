@@ -2,3 +2,5 @@
 external/*
 *.csv
 *.dat
+*.pdf
+*.Rapp*

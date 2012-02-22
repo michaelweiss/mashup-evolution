@@ -5,7 +5,7 @@ my $DEBUG = 0;				# show debug messages
 my $N = 1000;				# initial number of agents
 my $n = 450;				# number of agents joining each step
 my $mu = 0.004;				# innovation parameter
-my $m = 4;					# number of previous steps (-1 is all)
+my $m = 4;					# number of previous steps
 my $t = 0;					# time step
 my $T = 8000;				# length of simulation in time steps
 	

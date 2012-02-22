@@ -1,0 +1,63 @@
+SUMMARY
+This is an implementation of the evolutionary growth model with memory described by Bentley et al. (2011). The model has been
+validated with the words data set used in Bentley et al. (2011).
+
+FILES
+bentley.pl	Implementation of the evolutionary growth model with memory
+bentley.t	Tests related to the model implementation
+words.csv	English word distribution used to validate the model
+words.R		R instructions to produce the actual and simulated distributions
+
+PARAMETERS
+The model parameters can be set at the start of bentley.pl:
+
+my $N = 1000;				# initial number of agents
+my $n = 450;				# number of agents joining each step
+my $mu = 0.004;				# innovation parameter
+my $m = 4;					# number of previous steps
+my $t = 0;					# time step
+my $T = 8000;				# length of simulation in time steps
+
+MODEL
+The implementation of the model has three stages, init, grow, and show.
+
+The init stage creates the initial population of $N agents. Each agent is assigned to a unique location. At the end of this stage, only
+the last $m*$n ($m time steps * $n agents joining per time step) locations are retained in memory.
+
+In the grow stage, the model run through $T iterations. In each iteration, $n new agents are added to the model. Each agent either copies
+its location from another agent within the previous $m steps (with probablity 1-$mu), or innovates by choosing a new location (with probablity 
+$mu). When an agent copies another agent's location, this location is chosen at random from the first $m*$n locations in memory. These
+are the locations selected by agents in the $m previous time steps. When an agent innovates, it is assigned to a unique new location. In either
+case, the new location is then added to the memory for the current time step.
+
+Memory is implemented as an array of $m*$n+$n elements. The first $m*$n elements are locations assumed by agents in the $m previous time steps.
+The last $n elements are the locations selected by agents at the current time step. At the end of the current time step, the memory is updated to
+hold the locations for the next iteration. The oldest set of $n locations is "flushed" out of memory, shifting all elements in the array by $n
+positions. The $n locations from the current time step become the locations chosen during the last time step for the next iteration.
+
+The show stage reports a list of locations and location sizes.
+
+RUNNING THE MODEL
+To run the model, set the desired model parameters and execute bentley.pl:
+
+> bentley.pl >bentley_N_mu_m_n_T.csv
+
+For example, 
+
+> bentley.pl >bentley_1000_0004_4_450_8000.csv
+
+The simulation can take up to several minutes depending on the length of the number of time steps. When trying out new parameters, it is always
+a good idea to start with a low setting of $T, and inspect the results, before running a full-length simulation.
+
+Then, run the R instructions in words.R, either by cutting and pasting individually, or loading the script. The R script creates two plots:
+a ranked distribution of the 1000 most frequent words in the English language, and a ranked distribution of the top 1000 simulated location sizes. 
+This assumes that the above parameters ($N=1000, $mu=0.0004, $m=4, $n=450, and $T=8000) were used to run the model. It also computes the
+power law fits for both distributions. This part of the script requires the igraph library.
+
+REFERENCES
+Bentley, R.A., Ormerod, P., & Batty, M. (2011), Evolving social influence in large populations, Behavioral Ecology and Sociobiology, 
+	65, 537Ð546.
+
+URLS
+English words, http://www.bckelk.ukfsn.org/words/uk1000n.html
+igraph, http://igraph.sourceforge.net
