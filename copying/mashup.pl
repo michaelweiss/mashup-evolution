@@ -1,8 +1,7 @@
 #!/usr/bin/perl
 # Model to generate a network by copying (multiple links)
 
-my $N = 6;		# number of timesteps
-# my $N = 2500;
+my $N = 6;			# number of timesteps
 my $m_0 = 4;		# initial number of apis
 my $m = 4;			# number of apis per mashup (ie links created per mashup)
 my $r = 0.4;		# ratio of apis to mashups
