@@ -1,7 +1,5 @@
 #!/usr/bin/perl
 
-my $DEBUG = 0;				# show debug messages
-
 my $N = 1;					# initial number of agents
 my $n = 1;					# number of agents joining each step
 my $mu = 0.875;				# innovation parameter
@@ -9,52 +7,45 @@ my $m = 4;					# number of previous steps
 my $t = 0;					# time step
 my $T = 10;					# length of simulation in time steps
 	
-my @location;				# locations of agents
-my $l = $N;					# next available new location
+my %location;				# locations of agents
+my $l = $N;					# next available new location (not needed, but confirm with test)
 
 my $M0 = 2;					# initial number of apis
 my $M = 2;					# number of apis per mashup (ie links created per mashup)
 
 my @apis;					# apis
-my $nextApi = 1;
-
+my $nextApi = 0;
+		
 my @memory;					# most $m*$n recent choices
 
-my $seed = time() + $$;		# time + process id
+sub setup {
+	%location = [];		# generic
+	@memory = ();
+	@apis = ();			# mashup-specific
+	$nextApi = 0;
+}	
 
-sub init {
-	srand($seed);
-	foreach $i (0..$M0-1) {
+sub testGenerateApis {
+	generateApi() == 0 || die "expected api 0";
+	generateApi() == 1 || die "expected api 1";
+}
+
+sub testCreateInitialMashup {
+	my $mashup = hash(generateApi(), generateApi());
+	addLocation($mashup);
+	$location{$mashup} = 1;
+	$memory[-1] eq "0/1" || die "memory expected to contain 0/1, found $memory[-1]";
+	$location{"0/1"} == 1 || die "initial location expected to be 1";
+}
+
+sub testGenerateMashup {
+	foreach (0..$M0-1) {
 		generateApi();
 	}
-	foreach $i (0..$N-1) {
-		my $mashup = generateMashup();
-		addLocation($mashup);
-		$location{$mashup}++;
-	}
-	foreach ($m*$n..$N-1) {
-		shift @memory;
-	}
-}
-
-sub grow {
-}
-
-sub show {
-	foreach $k (keys %location) {
-		print "$k, $location{$k}\n";
-	}
-}
-
-sub showMemory {
-	# previous time steps
-	foreach $j (0..$m*$n-1) {
-		print "$j, $memory[$j]\n";
-	}
-	# current time step
-	foreach $j ($m*$n..$m*$n+$n-1) {
-		print "*$j, $memory[$j]\n";
-	}	
+	my $mashup = generateMashup();
+	$mashup eq "0/1" || die "mashup expected to be 0/1, found $mashup";
+	my $anotherMashup = generateMashup();
+	$anotherMashup eq "0/1" || die "mashup expected to be 0/1, found $anotherMashup";
 }
 
 sub generateApi {
@@ -100,11 +91,11 @@ sub addLocation {
 	}
 }
 
-init();
-grow();
+setup();
+testGenerateApis();
 
-print "Locations:\n";
-show();
+setup();
+testGenerateMashup();
 
-print "Memory:\n";
-showMemory();
+setup();
+testCreateInitialMashup();
