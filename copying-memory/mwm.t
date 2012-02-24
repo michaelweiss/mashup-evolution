@@ -4,7 +4,7 @@ my $DEBUG = 0;				# show debug messages
 
 my $N = 1;					# initial number of agents
 my $n = 1;					# number of agents joining each step
-my $mu = 0.875;				# innovation parameter
+my $mu = 0.5;				# innovation parameter
 my $m = 4;					# number of previous steps
 my $t = 0;					# time step
 my $T = 10;					# length of simulation in time steps
@@ -41,13 +41,16 @@ setup();
 testSelectLocation();
 
 setup();
-# testCopyFromMashup();
-
-setup();
-testPseudoRandomNumbers();
+testHash();
 
 setup();
 testAssignCopiedComponents();
+
+setup();
+testAssignRandomComponents();
+
+setup();
+# testCopyFromMashup();
 
 sub testGenerateApis {
 	generateApi() == 0 || die "expected api 0";
@@ -91,26 +94,30 @@ sub testCopyFromMashup {
 	$mashup eq "1/2" || die "copying mashup, found $mashup";
 }
 
-sub testPseudoRandomNumbers {
-	pseudo() == 0.1 || die "expected pseudo random 0.1";
-	pseudo() == 0.8 || die "expected pseudo random 0.8";
-	pseudo() == 0.2 || die "expected pseudo random 0.2";
-	pseudo() == 0.5 || die "expected pseudo random 0.5";
-	pseudo() == 0.3 || die "expected pseudo random 0.3";
-	pseudo() == 0.7 || die "expected pseudo random 0.7";
-	pseudo() == 0.4 || die "expected pseudo random 0.4";
-	pseudo() == 0.9 || die "expected pseudo random 0.9";
-	pseudo() == 0.0 || die "expected pseudo random 0.0";
-	pseudo() == 0.6 || die "expected pseudo random 0.6";
-	pseudo() == 0.1 || die "expected pseudo random 0.1";
+sub testHash {
+	my @mashup = (0, 2);
+	my $mashup = hash(@mashup);
+	$mashup eq "0/2" || die "hash expected 0/2, found $mashup";	
+	my @template = unhash($mashup);
+	$template[0] == 0 || die "templatep[0] == 0, found $template[0]";
+	$template[1] == 2 || die "templatep[1] == 2, found $template[2]";
 }
 
 sub testAssignCopiedComponents {
 	my @mashup;
-	my @template = unhash("0/1");
-	$mu = 0.8;
+	my @template = unhash("0/2");
 	my @random = assignCopiedComponents(\@mashup, \@template);
-	$random[0] == 1 || die "expected random[0] == 1, found $random[0]";
+	print "random = ", hash(@random), "\n";
+}
+
+sub testAssignRandomComponents {
+	foreach (0..4) {
+		generateApi();
+	}
+	my @mashup = (1, 3);
+	my @random = (1);
+	assignRandomComponents(\@mashup, \@random);
+	print "mashup = ", hash(@mashup), "\n";
 }
 
 sub generateApi {
@@ -164,32 +171,25 @@ sub assignCopiedComponents {
 	my ($mashup, $template) = @_;
 	my @random;
 	foreach $i (@{$template}) {
-		if (pseudo() < 1-$mu) {
+		if (rand() < 1-$mu) {
 			# with probability 1-$mu, the component is copied from the template
 			$mashup->[$i] = $template->[$i];
+#			print "copy $i\n";
 		} else {
 			# with probability $mu, the component is chosen at random, ie the
 			# mashup creator innovates on the templates
 			push(@random, $i);
+#			print "innovate $i\n";
 		}
 	}	
 	return @random
 }
 
-# pseudo random number sequence used by pseudo()
-my @pseudo = (0.1, 0.8, 0.2, 0.5, 0.3, 0.7, 0.4, 0.9, 0.0, 0.6);
-my $nextPseudo = 0;
-
-# produce known "random" numbers to allow us to run tests
-sub pseudo {
-	my $r = $pseudo[$nextPseudo];
-	$nextPseudo = ($nextPseudo+1) % 10;
-	return $r;
-}
-
 sub assignRandomComponents {
 	my ($mashup, $random) = @_;
 	my %component; 
+	# TODO: add all components of mashup to %component
+	#
 	foreach $i (@{$random}) {
 		do {
 			$k = int(rand()*($#apis+1));
@@ -204,7 +204,8 @@ sub hash {
 }
 
 sub unhash {
-	return split('/', @_);
+	my ($hash) = @_;
+	return split('/', $hash);
 }
 
 sub selectLocation {
