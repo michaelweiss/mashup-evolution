@@ -28,6 +28,27 @@ sub setup {
 	$nextApi = 0;
 }	
 
+setup();
+testGenerateApis();
+
+setup();
+testGenerateMashup();
+
+setup();
+testCreateInitialMashup();
+
+setup();
+testSelectLocation();
+
+setup();
+# testCopyFromMashup();
+
+setup();
+testPseudoRandomNumbers();
+
+setup();
+testAssignCopiedComponents();
+
 sub testGenerateApis {
 	generateApi() == 0 || die "expected api 0";
 	generateApi() == 1 || die "expected api 1";
@@ -65,6 +86,33 @@ sub testSelectLocation {
 		die "select did not return mashup from memory";
 }
 
+sub testCopyFromMashup {
+	my $mashup = copyFromMashup("1/2");
+	$mashup eq "1/2" || die "copying mashup, found $mashup";
+}
+
+sub testPseudoRandomNumbers {
+	pseudo() == 0.1 || die "expected pseudo random 0.1";
+	pseudo() == 0.8 || die "expected pseudo random 0.8";
+	pseudo() == 0.2 || die "expected pseudo random 0.2";
+	pseudo() == 0.5 || die "expected pseudo random 0.5";
+	pseudo() == 0.3 || die "expected pseudo random 0.3";
+	pseudo() == 0.7 || die "expected pseudo random 0.7";
+	pseudo() == 0.4 || die "expected pseudo random 0.4";
+	pseudo() == 0.9 || die "expected pseudo random 0.9";
+	pseudo() == 0.0 || die "expected pseudo random 0.0";
+	pseudo() == 0.6 || die "expected pseudo random 0.6";
+	pseudo() == 0.1 || die "expected pseudo random 0.1";
+}
+
+sub testAssignCopiedComponents {
+	my @mashup;
+	my @template = unhash("0/1");
+	$mu = 0.8;
+	my @random = assignCopiedComponents(\@mashup, \@template);
+	$random[0] == 1 || die "expected random[0] == 1, found $random[0]";
+}
+
 sub generateApi {
 	push(@apis, $nextApi++);
 	return $apis[-1];	
@@ -83,8 +131,80 @@ sub generateMashup {
 	return hash(sort @mashup);
 }
 
+sub copyFromMashup {
+	my ($template) = @_;
+	my @mashup;
+	my @template = unhash($template);
+	# assign copied components first to the copy, so that random components 
+	# cannot duplicate copied components
+	my @random;
+	foreach $i (@template) {
+		if (rand() < 1-$mu) {
+			# with probability 1-$mu, the component is copied from the template
+			$mashup[$i] = $template[$i];
+		} else {
+			# with probability $mu, the component is chosen at random, ie the
+			# mashup creator innovates on the templates
+			push(@random, $i);
+		}
+	}
+	# assign random components next
+	my %component; 
+	foreach $i (@random) {
+		do {
+			$k = int(rand()*($#apis+1));
+		} while ($component{$k});
+		$component{$k} = 1;
+		$mashup[$i] = $k;
+	}
+	return hash(sort @mashup);;
+}
+
+sub assignCopiedComponents {
+	my ($mashup, $template) = @_;
+	my @random;
+	foreach $i (@{$template}) {
+		if (pseudo() < 1-$mu) {
+			# with probability 1-$mu, the component is copied from the template
+			$mashup->[$i] = $template->[$i];
+		} else {
+			# with probability $mu, the component is chosen at random, ie the
+			# mashup creator innovates on the templates
+			push(@random, $i);
+		}
+	}	
+	return @random
+}
+
+# pseudo random number sequence used by pseudo()
+my @pseudo = (0.1, 0.8, 0.2, 0.5, 0.3, 0.7, 0.4, 0.9, 0.0, 0.6);
+my $nextPseudo = 0;
+
+# produce known "random" numbers to allow us to run tests
+sub pseudo {
+	my $r = $pseudo[$nextPseudo];
+	$nextPseudo = ($nextPseudo+1) % 10;
+	return $r;
+}
+
+sub assignRandomComponents {
+	my ($mashup, $random) = @_;
+	my %component; 
+	foreach $i (@{$random}) {
+		do {
+			$k = int(rand()*($#apis+1));
+		} while ($component{$k});
+		$component{$k} = 1;
+		$mashup->[$i] = $k;
+	}	
+}
+
 sub hash {
 	return join('/', @_);
+}
+
+sub unhash {
+	return split('/', @_);
 }
 
 sub selectLocation {
@@ -140,15 +260,3 @@ sub showMemory {
 		print "*$j, $memory[$j]\n";
 	}	
 }
-
-setup();
-testGenerateApis();
-
-setup();
-testGenerateMashup();
-
-setup();
-testCreateInitialMashup();
-
-setup();
-testSelectLocation();
