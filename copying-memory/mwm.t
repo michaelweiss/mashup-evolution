@@ -1,5 +1,7 @@
 #!/usr/bin/perl
 
+my $DEBUG = 0;				# show debug messages
+
 my $N = 1;					# initial number of agents
 my $n = 1;					# number of agents joining each step
 my $mu = 0.875;				# innovation parameter
@@ -12,6 +14,7 @@ my $l = $N;					# next available new location (not needed, but confirm with test
 
 my $M0 = 2;					# initial number of apis
 my $M = 2;					# number of apis per mashup (ie links created per mashup)
+my $r = 0.4;				# ratio of apis to mashups
 
 my @apis;					# apis
 my $nextApi = 0;
@@ -19,9 +22,9 @@ my $nextApi = 0;
 my @memory;					# most $m*$n recent choices
 
 sub setup {
-	%location = [];		# generic
+	%location = [];			# generic
 	@memory = ();
-	@apis = ();			# mashup-specific
+	@apis = ();				# mashup-specific
 	$nextApi = 0;
 }	
 
@@ -48,6 +51,20 @@ sub testGenerateMashup {
 	$anotherMashup eq "0/1" || die "mashup expected to be 0/1, found $anotherMashup";
 }
 
+sub testSelectLocation {
+	my @mashups;
+	foreach (0..$M0-1) {
+		generateApi();
+	}
+	foreach $i (0..2) {
+		$mashup[$i] = generateMashup();
+		addLocation($mashup[$i]);
+	}
+	$mashup = selectLocation();
+	$mashup eq $mashup[0] || $mashup eq $mashup[1] || $mashup eq $mashup[2] || 
+		die "select did not return mashup from memory";
+}
+
 sub generateApi {
 	push(@apis, $nextApi++);
 	return $apis[-1];	
@@ -68,6 +85,22 @@ sub generateMashup {
 
 sub hash {
 	return join('/', @_);
+}
+
+sub selectLocation {
+	my ($t) = @_;
+	print "memory at t = $t\n" if ($DEBUG);
+	showMemory() if ($DEBUG);
+	# pick a random number in the range 0..size(memory)
+	# don't include locations chosen in the current time step
+	my $r = int(rand()*min($#memory+1, $m*$n));
+	return $memory[$r];
+}
+
+sub min {
+	my ($x, $y) = @_;
+	return $x if ($x < $y);
+	return $y;
 }
 
 sub addLocation {
@@ -91,6 +124,23 @@ sub addLocation {
 	}
 }
 
+sub show {
+	foreach $k (sort keys %location) {
+		print "$k, $location{$k}\n";
+	}
+}
+
+sub showMemory {
+	# previous time steps
+	foreach $j (0..$m*$n-1) {
+		print "$j, $memory[$j]\n";
+	}
+	# current time step
+	foreach $j ($m*$n..$m*$n+$n-1) {
+		print "*$j, $memory[$j]\n";
+	}	
+}
+
 setup();
 testGenerateApis();
 
@@ -99,3 +149,6 @@ testGenerateMashup();
 
 setup();
 testCreateInitialMashup();
+
+setup();
+testSelectLocation();

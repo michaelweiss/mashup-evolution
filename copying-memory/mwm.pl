@@ -1,19 +1,20 @@
 #!/usr/bin/perl
 
-my $DEBUG = 0;				# show debug messages
+my $DEBUG = 1;				# show debug messages
 
-my $N = 1;					# initial number of agents
+my $N = 3;					# initial number of agents
 my $n = 1;					# number of agents joining each step
 my $mu = 0.875;				# innovation parameter
 my $m = 4;					# number of previous steps
 my $t = 0;					# time step
 my $T = 10;					# length of simulation in time steps
 	
-my @location;				# locations of agents
+my $location;				# locations of agents
 my $l = $N;					# next available new location
 
-my $M0 = 2;					# initial number of apis
-my $M = 2;					# number of apis per mashup (ie links created per mashup)
+my $M0 = 4;					# initial number of apis (ensure that $M0 >= $M)
+my $M = 2;					# number of apis per mashup
+my $r = 0.4;				# ratio of apis to mashups
 
 my @apis;					# apis
 my $nextApi = 1;
@@ -24,10 +25,10 @@ my $seed = time() + $$;		# time + process id
 
 sub init {
 	srand($seed);
-	foreach $i (0..$M0-1) {
+	foreach (0..$M0-1) {
 		generateApi();
 	}
-	foreach $i (0..$N-1) {
+	foreach (0..$N-1) {
 		my $mashup = generateMashup();
 		addLocation($mashup);
 		$location{$mashup}++;
@@ -38,10 +39,20 @@ sub init {
 }
 
 sub grow {
+	foreach $t ($N..$N+$T-1) {
+		print "locations at t = $t\n" if ($DEBUG);
+		show() if ($DEBUG);
+		foreach (0..$n-1) {
+			my $template = selectLocation($t);		# location selected for copying
+			my $mashup = copyFromMashup($template);
+			addLocation($mashup);
+			$location{$mashup}++;
+		}
+	}
 }
 
 sub show {
-	foreach $k (keys %location) {
+	foreach $k (sort keys %location) {
 		print "$k, $location{$k}\n";
 	}
 }
@@ -75,8 +86,29 @@ sub generateMashup {
 	return hash(sort @mashup);
 }
 
+sub copyFromMashup {
+	my ($template) = @_;
+	return $template;
+}
+
 sub hash {
 	return join('/', @_);
+}
+
+sub selectLocation {
+	my ($t) = @_;
+	print "memory at t = $t\n" if ($DEBUG);
+	showMemory() if ($DEBUG);
+	# pick a random number in the range 0..size(memory)
+	# don't include locations chosen in the current time step
+	my $r = int(rand()*min($#memory+1, $m*$n));
+	return $memory[$r];
+}
+
+sub min {
+	my ($x, $y) = @_;
+	return $x if ($x < $y);
+	return $y;
 }
 
 sub addLocation {
@@ -102,9 +134,4 @@ sub addLocation {
 
 init();
 grow();
-
-print "Locations:\n";
 show();
-
-print "Memory:\n";
-showMemory();
