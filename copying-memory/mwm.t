@@ -138,7 +138,7 @@ sub generateMashup {
 		$component{$k} = 1;
 		push(@mashup, $k);
 	}
-	return hash(sort @mashup);
+	return hash(sort {$a <=> $b} @mashup);
 }
 
 sub copyFromMashup {
@@ -147,22 +147,24 @@ sub copyFromMashup {
 	my @template = unhash($template);
 	my @choices = assignCopiedComponents(\@mashup, \@template);
 	assignRandomComponents(\@mashup, \@choices);
-	return hash(sort @mashup);;
+	return hash(sort {$a <=> $b} @mashup);;
 }
 
 sub assignCopiedComponents {
 	my ($mashup, $template) = @_;
 	my @choices;				# vector of innovations (0: copy, 1: innovate)
-	foreach $i (@{$template}) {
+	my $i = 0;
+	foreach $k (@{$template}) {
 		if (rand() < 1-$mu) {
 			# with probability 1-$mu, the component is copied from the template
-			$mashup->[$i] = $template->[$i];
+			$mashup->[$i] = $k;
 			push(@choices, 0);	# copy
 		} else {
 			# with probability $mu, the component is chosen at random, ie the
 			# mashup creator innovates on the templates
 			push(@choices, 1);	# innovate
 		}
+		$i++;
 	}	
 	return @choices;
 }

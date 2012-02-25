@@ -1,13 +1,13 @@
 #!/usr/bin/perl
 
-my $DEBUG = 1;				# show debug messages
+my $DEBUG = 0;				# show debug messages
 
-my $N = 3;					# initial number of agents
+my $N = 1;					# initial number of agents
 my $n = 1;					# number of agents joining each step
-my $mu = 0.875;				# innovation parameter
-my $m = 4;					# number of previous steps
+my $mu = 0.145;				# innovation parameter
+my $m = 5028;				# number of previous steps
 my $t = 0;					# time step
-my $T = 10;					# length of simulation in time steps
+my $T = 5028-$N;			# length of simulation in time steps
 	
 my $location;				# locations of agents
 my $l = $N;					# next available new location
@@ -18,6 +18,7 @@ my $r = 0.4;				# ratio of apis to mashups
 
 my @apis;					# apis
 my $nextApi = 1;
+my %apis;
 
 my @memory;					# most $m*$n recent choices
 
@@ -43,6 +44,9 @@ sub grow {
 		print "locations at t = $t\n" if ($DEBUG);
 		show() if ($DEBUG);
 		foreach (0..$n-1) {
+			if (rand() < $r) {						# for each mashup generate $r apis on average
+				generateApi();
+			}
 			my $template = selectLocation($t);		# location selected for copying
 			my $mashup = copyFromMashup($template);
 			addLocation($mashup);
@@ -83,16 +87,71 @@ sub generateMashup {
 		$component{$k} = 1;
 		push(@mashup, $k);
 	}
-	return hash(sort @mashup);
+	countApiUsage(@mashup);
+	return hash(sort {$a <=> $b} @mashup);
 }
 
 sub copyFromMashup {
 	my ($template) = @_;
-	return $template;
+	my @mashup;
+	my @template = unhash($template);
+	my @choices = assignCopiedComponents(\@mashup, \@template);
+	assignRandomComponents(\@mashup, \@choices);
+	countApiUsage(@mashup);
+	return hash(sort {$a <=> $b} @mashup);;
+}
+
+sub assignCopiedComponents {
+	my ($mashup, $template) = @_;
+	my @choices;				# vector of innovations (0: copy, 1: innovate)
+	my $i = 0;
+	foreach $k (@{$template}) {
+		if (rand() < 1-$mu) {
+			# with probability 1-$mu, the component is copied from the template
+			$mashup->[$i] = $k;
+			push(@choices, 0);	# copy
+		} else {
+			# with probability $mu, the component is chosen at random, ie the
+			# mashup creator innovates on the templates
+			push(@choices, 1);	# innovate
+		}
+		$i++;
+	}	
+	return @choices;
+}
+
+sub assignRandomComponents {
+	my ($mashup, $choices) = @_;
+	my %component; 
+	# mark copied components so that random components 
+	# cannot duplicate copied components
+	my $i = 0;
+	foreach $choice (@{$choices}) {
+		if ($choice == 0) {		# copy
+			$component{$mashup->[$i]} = 1;
+		}
+		$i++;
+	}
+	my $i = 0;	
+	foreach $choice (@{$choices}) {
+		if ($choice == 1) {		# innovate
+			do {
+				$k = int(rand()*($#apis+1));
+			} while ($component{$k});
+			$component{$k} = 1;
+			$mashup->[$i] = $k;
+		}
+		$i++;
+	}	
 }
 
 sub hash {
 	return join('/', @_);
+}
+
+sub unhash {
+	my ($hash) = @_;
+	return split('/', $hash);
 }
 
 sub selectLocation {
@@ -132,6 +191,31 @@ sub addLocation {
 	}
 }
 
+sub countApiUsage {
+	my @mashup = @_;
+	foreach my $k (@mashup) {
+		$apis{$k}++;
+	}
+}
+
+sub showApiUsage {
+	my $first = 1;
+	print "apis <- c(";
+	foreach $k (@apis) {
+		if ($apis{$k}) {
+			if ($first) {
+				$first = 0;
+			} else {
+				print ",";
+			}
+			print "$apis{$k}";
+		}
+	}
+	print ")\n";
+}
+
 init();
 grow();
 show();
+
+showApiUsage();
