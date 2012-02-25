@@ -50,7 +50,7 @@ setup();
 testAssignRandomComponents();
 
 setup();
-# testCopyFromMashup();
+testCopyFromMashup();
 
 sub testGenerateApis {
 	generateApi() == 0 || die "expected api 0";
@@ -90,8 +90,11 @@ sub testSelectLocation {
 }
 
 sub testCopyFromMashup {
-	my $mashup = copyFromMashup("1/2");
-	$mashup eq "1/2" || die "copying mashup, found $mashup";
+	foreach (0..5) {
+		generateApi();
+	}
+	my @mashup = copyFromMashup("0/1/2");
+	print "copy from mashup = ", hash(@mashup), "\n";
 }
 
 sub testHash {
@@ -105,19 +108,19 @@ sub testHash {
 
 sub testAssignCopiedComponents {
 	my @mashup;
-	my @template = unhash("0/2");
-	my @random = assignCopiedComponents(\@mashup, \@template);
-	print "random = ", hash(@random), "\n";
+	my @template = unhash("0/2/5");
+	my @choices = assignCopiedComponents(\@mashup, \@template);
+	print "choices = ", hash(@choices), "\n";
 }
 
 sub testAssignRandomComponents {
-	foreach (0..4) {
+	foreach (0..9) {
 		generateApi();
 	}
-	my @mashup = (1, 3);
-	my @random = (1);
-	assignRandomComponents(\@mashup, \@random);
-	print "mashup = ", hash(@mashup), "\n";
+	my @mashup = (0, 1, 2);
+	my @choices = (1, 0, 1);
+	assignRandomComponents(\@mashup, \@choices);
+	print "copy = ", hash(@mashup), "\n";
 }
 
 sub generateApi {
@@ -142,60 +145,50 @@ sub copyFromMashup {
 	my ($template) = @_;
 	my @mashup;
 	my @template = unhash($template);
-	# assign copied components first to the copy, so that random components 
-	# cannot duplicate copied components
-	my @random;
-	foreach $i (@template) {
-		if (rand() < 1-$mu) {
-			# with probability 1-$mu, the component is copied from the template
-			$mashup[$i] = $template[$i];
-		} else {
-			# with probability $mu, the component is chosen at random, ie the
-			# mashup creator innovates on the templates
-			push(@random, $i);
-		}
-	}
-	# assign random components next
-	my %component; 
-	foreach $i (@random) {
-		do {
-			$k = int(rand()*($#apis+1));
-		} while ($component{$k});
-		$component{$k} = 1;
-		$mashup[$i] = $k;
-	}
+	my @choices = assignCopiedComponents(\@mashup, \@template);
+	assignRandomComponents(\@mashup, \@choices);
 	return hash(sort @mashup);;
 }
 
 sub assignCopiedComponents {
 	my ($mashup, $template) = @_;
-	my @random;
+	my @choices;				# vector of innovations (0: copy, 1: innovate)
 	foreach $i (@{$template}) {
 		if (rand() < 1-$mu) {
 			# with probability 1-$mu, the component is copied from the template
 			$mashup->[$i] = $template->[$i];
-#			print "copy $i\n";
+			push(@choices, 0);	# copy
 		} else {
 			# with probability $mu, the component is chosen at random, ie the
 			# mashup creator innovates on the templates
-			push(@random, $i);
-#			print "innovate $i\n";
+			push(@choices, 1);	# innovate
 		}
 	}	
-	return @random
+	return @choices;
 }
 
 sub assignRandomComponents {
-	my ($mashup, $random) = @_;
+	my ($mashup, $choices) = @_;
 	my %component; 
-	# TODO: add all components of mashup to %component
-	#
-	foreach $i (@{$random}) {
-		do {
-			$k = int(rand()*($#apis+1));
-		} while ($component{$k});
-		$component{$k} = 1;
-		$mashup->[$i] = $k;
+	# mark copied components so that random components 
+	# cannot duplicate copied components
+	my $i = 0;
+	foreach $choice (@{$choices}) {
+		if ($choice == 0) {		# copy
+			$component{$mashup->[$i]} = 1;
+		}
+		$i++;
+	}
+	my $i = 0;	
+	foreach $choice (@{$choices}) {
+		if ($choice == 1) {		# innovate
+			do {
+				$k = int(rand()*($#apis+1));
+			} while ($component{$k});
+			$component{$k} = 1;
+			$mashup->[$i] = $k;
+		}
+		$i++;
 	}	
 }
 
