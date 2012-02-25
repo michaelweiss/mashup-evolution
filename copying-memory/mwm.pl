@@ -4,10 +4,10 @@ my $DEBUG = 0;				# show debug messages
 
 my $N = 1;					# initial number of agents
 my $n = 1;					# number of agents joining each step
-my $mu = 0.145;				# innovation parameter
-my $m = 5028;				# number of previous steps
+my $mu = 0.005;				# innovation parameter
+my $m = 100;				# number of previous steps
 my $t = 0;					# time step
-my $T = 5028-$N;			# length of simulation in time steps
+my $T = (5028-$N)/$n;		# length of simulation in time steps
 	
 my $location;				# locations of agents
 my $l = $N;					# next available new location
@@ -23,6 +23,13 @@ my %apis;
 my @memory;					# most $m*$n recent choices
 
 my $seed = time() + $$;		# time + process id
+
+# Read parameters from the command line
+$N = $ARGV[0] if ($ARGV[0]);
+$mu = $ARGV[1] if ($ARGV[1]);
+$m = $ARGV[2] if ($ARGV[2]);
+$n = $ARGV[3] if ($ARGV[3]);
+$T = $ARGV[4] if ($ARGV[4]);
 
 sub init {
 	srand($seed);
@@ -201,14 +208,14 @@ sub countApiUsage {
 sub showApiUsage {
 	my $first = 1;
 	print "apis <- c(";
-	foreach $k (@apis) {
-		if ($apis{$k}) {
+	foreach $k (sort { $b <=> $a } values %apis) {
+		if ($k) {
 			if ($first) {
 				$first = 0;
 			} else {
 				print ",";
 			}
-			print "$apis{$k}";
+			print "$k";
 		}
 	}
 	print ")\n";
@@ -216,6 +223,6 @@ sub showApiUsage {
 
 init();
 grow();
-show();
+# show();
 
 showApiUsage();
