@@ -3,4 +3,7 @@ external/*
 *.csv
 *.dat
 *.pdf
+*.txt
 *.Rapp*
+*.RData
+mwm_*
