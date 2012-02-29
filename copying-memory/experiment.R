@@ -39,9 +39,9 @@ experiment.all <- function() {
 
 # run experiment with m between 1 and number.mashups and n=1
 experiment.memory <- function() {
-	rbga.results <- rbga(c(0.0, 1), c(1.0, number.mashups), 
+	rbga.results <- rbga(c(0.000, 1), c(0.250, 5), 
 		evalFunc=evaluate.memory, mutationChance=0.01,
-		popSize=100, iters=50)
+		popSize=200, iters=100)
 	rbga.results
 }
 
@@ -55,7 +55,7 @@ experiment.memory <- function() {
 experiment.memory.n <- function() {
 	rbga.results <- rbga(c(0.150, 1, 1), c(0.250, 100, 100), 
 		evalFunc=evaluate.memory.n, mutationChance=0.01,
-		popSize=200, iters=10)
+		popSize=200, iters=100)
 	rbga.results
 }
 
@@ -67,8 +67,20 @@ evaluate.all <- function(string=c()) {
 
 # evaluation function used by experiment.memory
 evaluate.memory <- function(string=c()) {
-	mwm(1, string[1], string[2], 1, number.mashups)
-	distance(apis)
+	n <- 1000
+	if (string[2]*n > number.mashups) {
+		Inf
+	} else {
+		runs <- 10
+		dist <- sapply(seq(runs), function(run) {
+			mwm(1, string[1], string[2], n, (number.mashups-1)/n, run)
+			distance(apis)
+		})
+		mean.dist <- mean(dist)
+		print(string)
+		print(mean.dist)
+		mean.dist
+	}
 }
 
 # evaluation function used by experiment.memory.n
