@@ -43,8 +43,7 @@ experiment.memory <- function() {
 
 experiment.memory.n <- function() {
 	rbga.results <- rbga(c(0.150, 1, 1), c(0.250, 100, 100), 
-#		suggestions = suggestions,
-		evalFunc=evaluate.memory.n, mutationChance=0.10,
+		evalFunc=evaluate.memory.n, mutationChance=0.01,
 		popSize=200, iters=10)
 	rbga.results
 }
@@ -60,15 +59,18 @@ evaluate.memory <- function(string=c()) {
 }
 
 evaluate.memory.n <- function(string=c()) {
+	print(string)
 	if (string[2]*string[3] > number.mashups) {
-		10000000
+		Inf
 	} else {
-		runs <- 10
+		runs <- 100
 		dist <- sapply(seq(runs), function(run) {
 			mwm(1, string[1], string[2], string[3], (number.mashups-1)/string[3], run)
 			distance(apis)
 		})
-		mean(dist)
+		mean.dist <- mean(dist)
+		print(mean.dist)
+		mean.dist
 	}
 }
 
@@ -91,4 +93,41 @@ optimize.memory.n.evaluate <- function(x) {
 
 optimize.memory.n <- function() {
 	optim(c(0.5, 10, 200), optimize.memory.n.evaluate, method = "SANN", control=c(maxit=100))
+}
+
+# c(1,2,3,4,5,6,7,8,9,10,20,30,40,50,60,70,80,90,100)
+
+experiment.3d <- function() {
+	z = matrix(1:100, nrow=10, byrow=T) 
+	i = 1
+	for (m in 10 + 20 * (seq(10)-1)) {
+		j = 1
+		for (n in 10 + 20 * (seq(10)-1)) {
+			if (m*n < number.mashups) {
+				print(c(m, n))
+				runs <- 10
+				dist <- sapply(seq(runs), function(run) {
+					mwm(1, 0.2, m, n, (number.mashups-1)/n, run)
+					distance(apis)
+				})
+				z[i, j] <- mean(dist)
+			} else {
+				z[i, j] <- NA
+			}
+			j <- j+1
+		}
+		i <- i+1
+	}
+	z
+}
+
+experiment.3d.plot <- function() {
+	x <- -10 + 20 * (1:nrow(z))
+	y <- -10 + 20 * (1:ncol(z))
+	zlim <- range(y)
+	zlen <- zlim[2] - zlim[1] + 1
+	colorlut <- rainbow(zlen)
+	col <- colorlut[ z-zlim[1]+1 ]
+	open3d()
+	persp(x, y, z, phi=15, theta=120)
 }

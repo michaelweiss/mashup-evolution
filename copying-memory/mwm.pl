@@ -14,7 +14,7 @@ my $l = $N;					# next available new location
 
 my $M0 = 4;					# initial number of apis (ensure that $M0 >= $M)
 my $M = 2;					# number of apis per mashup
-my $r = 0.4;				# ratio of apis to mashups
+my $r = 0.414;				# ratio of apis to mashups
 
 my @apis;					# apis
 my $nextApi = 1;

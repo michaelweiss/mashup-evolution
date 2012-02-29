@@ -7,3 +7,5 @@ external/*
 *.Rapp*
 *.RData
 mwm_*
+*.xls
+*.ods

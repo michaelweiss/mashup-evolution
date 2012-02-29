@@ -2,7 +2,7 @@
 
 # mdm-2
 # read mashups from spreadsheet
-# show mashups
+# show mashup variants
 
 my %mashups;
 
