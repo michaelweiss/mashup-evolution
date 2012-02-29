@@ -4,6 +4,9 @@
 # read mashups from spreadsheet
 # compute mashup lifespan
 
+# Run with:
+# mdm-2.pl < data/mashup-apis-2010-08-16.csv 
+
 my %mashups;
 my %mashupVariants;
 my %top5;
@@ -13,22 +16,23 @@ readMashupEventsFromSpreadsheet();
 
 # experimentLifespans(249);		# 3 months
 experimentLifespans(83);		# 1 month
+# experimentLifespans(4983);	# 5 years
 
 # experimentShowLifespans();
-experimentShowLifespansOverTime("GoogleMaps");
-experimentShowLifespansOverTime("Flickr");
-experimentShowLifespansOverTime("YouTube");
-experimentShowLifespansOverTime("AmazoneCommerce");
-experimentShowLifespansOverTime("GoogleMaps/YouTube");
-experimentShowLifespansOverTime("Twitter");
-experimentShowLifespansOverTime("411Sync");
-experimentShowLifespansOverTime("MicrosoftVirtualEarth");
-experimentShowLifespansOverTime("GoogleMaps/Twitter");
-experimentShowLifespansOverTime("Shopping.com");
+showTop10LifesspansOverTime();
 
-
-# all-time most popular
-# experimentLifespans(4983);	# 5 years
+sub showTop10LifesspansOverTime {
+	experimentShowLifespansOverTime("GoogleMaps");
+	experimentShowLifespansOverTime("Flickr");
+	experimentShowLifespansOverTime("YouTube");
+	experimentShowLifespansOverTime("AmazoneCommerce");
+	experimentShowLifespansOverTime("GoogleMaps/YouTube");
+	experimentShowLifespansOverTime("Twitter");
+	experimentShowLifespansOverTime("411Sync");
+	experimentShowLifespansOverTime("MicrosoftVirtualEarth");
+	experimentShowLifespansOverTime("GoogleMaps/Twitter");
+	experimentShowLifespansOverTime("Shopping.com");
+}
 
 sub readMashupEventsFromSpreadsheet {
 	my @entries;
