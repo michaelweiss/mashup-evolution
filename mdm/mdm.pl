@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# mashups distance
+# mashups distance matrix (mdm)
 
 # hash to test whether an api has already been created
 my %mashups;
